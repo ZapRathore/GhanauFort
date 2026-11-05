@@ -179,16 +179,6 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
   .bg,.brand,.search,#panel,.dock,.menu,#toast{display:none!important}
   #tree{position:static;height:96vh}
 }
-
-#chatList{display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow:auto;padding:4px 2px;margin:0 0 12px}
-.bub{align-self:flex-start;max-width:92%;background:var(--bg);border:1px solid var(--stroke);border-radius:16px 16px 16px 4px;padding:10px 13px;font-size:14px}
-.bub.me{align-self:flex-end;border-radius:16px 16px 4px 16px;border-color:var(--accent)}
-.bub .bh{display:flex;gap:10px;justify-content:space-between;align-items:baseline}.bub .bh i{font-style:normal;font-size:11.5px;color:var(--muted)}
-.bub .bt{color:var(--gold);font-weight:600;font-size:12.5px;margin:2px 0 4px}
-.bub .cr{margin:2px 0;white-space:pre-wrap;word-break:break-word}.bub .cr span{display:block;font-size:11.5px;color:var(--muted)}
-.bub .bs{margin-top:6px;font-size:12px;font-weight:600;color:#1f8a4c}.bub .ba{display:flex;gap:6px;margin-top:8px}
-.chat-empty{color:var(--muted);text-align:center;padding:24px 8px}
-.cnt{font-style:normal;background:var(--accent);color:var(--accent-ink);border-radius:99px;font-size:11px;padding:1px 7px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -259,7 +249,6 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
   </div>
   <span class="sep" id="moreSep"></span>
   <button class="btn" id="newsBtn" aria-label="Latest updates and news"><span class="lg">📰 Updates</span><span class="sm">📰 News</span><i class="dot" id="newsDot" hidden></i></button>
-  <button class="btn" id="chatBtn" aria-label="Requests chat"><span class="lg">💬 Requests</span><span class="sm">💬</span><i class="cnt" id="chatCount" hidden></i></button>
   <button class="btn" id="moreBtn" aria-haspopup="true" aria-expanded="false">More ▴</button>
   <button class="btn primary" id="reqBtn"><span class="lg">✎ Add / Change name</span><span class="sm">✎ Request</span></button>
 </nav>
@@ -271,7 +260,7 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
   <div class="dlg">
     <button class="x" data-close aria-label="Close">×</button>
     <h2 id="reqT">Add or change a name</h2>
-    <p class="sub">Want to add a family member or correct something? Fill this form and your request will appear in the Requests chat for everyone to see.</p>
+    <p class="sub">Want to add a family member or correct something? Fill this form and it will be sent to the family record keeper.</p>
     <form id="reqForm" novalidate>
       <label class="fld"><span>What do you want to do?</span>
         <select name="request_type" id="fType">
@@ -292,6 +281,7 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
         <label class="fld"><span>Your name *</span><input name="sender_name" id="fSender" required autocomplete="name"></label>
         <label class="fld"><span>Phone / WhatsApp</span><input name="phone" id="fPhone" type="tel" autocomplete="tel"></label>
       </div>
+      <label class="fld"><span>Your email <small>(optional, so we can reply)</small></span><input name="email" id="fMail" type="email" autocomplete="email"></label>
       <input type="hidden" name="lineage" id="fLine">
       <div class="hp" aria-hidden="true"><label>Leave empty <input type="text" name="_honey" tabindex="-1" autocomplete="off"></label></div>
       <div class="row" style="margin-top:4px">
@@ -313,17 +303,6 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
     <div class="bars" id="stBars"></div>
     <h3 style="margin:16px 0 0;font-size:13px;color:var(--muted)">Largest branches <small>(click to open)</small></h3>
     <ul class="top" id="stTop"></ul>
-  </div>
-</dialog>
-
-<!-- Requests chat -->
-<dialog id="chatDlg" class="wide" aria-labelledby="chT">
-  <div class="dlg">
-    <button class="x" data-close aria-label="Close">✕</button>
-    <h2 id="chT">Requests chat</h2>
-    <p class="sub" id="chatNote">All add / change requests appear here.</p>
-    <div id="chatList" aria-live="polite"></div>
-    <div class="row"><button class="btn primary" id="chatNew">✎ Add / Change name</button><button class="btn" data-close>Close</button></div>
   </div>
 </dialog>
 
@@ -352,13 +331,16 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
       <li><b>Copy link</b> in the details card shares a direct link to that person.</li>
       <li><b>Mark as person A</b>, then open another person to see how the two are related.</li>
       <li><b>More → Download</b> saves the visible tree as an image, SVG or PDF.</li>
-      <li><b>Add / Change name</b> posts your request in the <b>Requests</b> chat, where all changes are listed.</li>
+      <li><b>✎ Add / Change name</b> sends your request to the record keeper by email.</li>
     </ul>
   </div>
 </dialog>
 
 <script>
 const treeData = {"name": "राव  बीकाजी","children": [{"name": "राव नारोजी सिंह"}, {"name": "राव लूणकरनजी","children": [{"name": "जेत सिंह जी", "children": [{"name": "कल्याण सिंह (बीकानेर)"}, {"name": "भीम राज सिंह"}, {"name": "ठाकुरसिंह जी"}, {"name": "मालदेव सिंह जी"}, {"name": "कान्ह सिंह जी"}, {"name": "श्री रंग सिंह जी","children": [{"name": "भगवानदास जी","children": [{"name": "मनोहरदास जी","children": [{"name": "करमसेन जी"}, {"name": "किशनदास सिंह","children": [{"name": "प्रताप सिंह"}, {"name": "राम सिंह","children": [{"name": "फ़तेह सिंह "}, {"name": "कीरता सिंह (अजीतपुरा)"}, {"name": "दीपा सिंह (अजीतपुरा)"}, {"name": "हिन्दु सिंह (घणाऊ)","children": [{"name": "भवानी  सिंह","children": [{"name": "अमर सिंह","children": [{"name": "पर्थ्वी सिंह","children": [{"name": "जवाहर सिंह ","children": [{"name": "बाग़ सिंह","children": [{"name": "बाल सिंह","children": [{"name": "जसवंत सिंह","children": [{"name": "मांगू सिंह"}, {"name": "सत्यपाल सिंह"}]}]}]}]}]}, {"name": "बिजराज सिंह","children": [{"name": "विशाल सिंह","children": [{"name": "खगाल सिंह","children": [{"name": "सुगन सिंह"}, {"name": "कनक सिंह","children": [{"name": "भवर सिंह","children": [{"name": "गुलाब सिंह"}, {"name": "लक्ष्मण सिंह"}, {"name": "बिसन सिंह"}, {"name": "रामचंद्र सिंह"}, {"name": "महेंद्र सिंह"}, {"name": "नरेन्द्र सिंह"}]}, {"name": "उदय सिंह","children": [{"name": "राजेंद्र सिंह"}, {"name": "सुरेंद्र सिंह"}, {"name": "महिपाल सिंह"}]}, {"name": "इन्द्र सिंह","children": [{"name": "प्रकाश सिंह"}, {"name": "धर्मपाल सिंह"}, {"name": "कुमेर सिंह"}, {"name": "श्रवण सिंह"}]}]}, {"name": "बने सिंह","children": [{"name": "अनपाल सिंह","children": [{"name": "दान सिंह"}, {"name": "सांवत सिंह"}, {"name": "नर सिंह"}, {"name": "राजकुमार सिंह"}, {"name": "पवन सिंह"}, {"name": "श्रवण सिंह"}]}, {"name": "बीरजु सिंह","children": [{"name": "ज्ञान सिंह"}, {"name": "विक्रम सिंह"}]}]}, {"name": "धने सिंह"}, {"name": "गाड़ सिंह","children": [{"name": "नारायण सिंह","children": [{"name": "कँवरपाल सिंह","children": [{"name": "आज़ाद सिंह"}]}, {"name": "जयपाल सिंह","children": [{"name": "साहिल सिंह"}]}]}, {"name": "अर्जुन सिंह","children": [{"name": "करणपाल सिंह"}, {"name": "भवानी सिंह"}]}, {"name": "प्रभु सिंह","children": [{"name": "मोहन सिंह"}, {"name": "कायम सिंह"}]}]}]}, {"name": "भीम सिंह","children": [{"name": "हरि सिंह","children": [{"name": "उमेद सिंह"}, {"name": "सादुल सिंह"}, {"name": "सज्जन सिंह"}]}, {"name": "सैतान सिंह","children": [{"name": "मगन सिंह","children": [{"name": "सुरजमाल सिंह"}, {"name": "गिरवर सिंह"}]}]}, {"name": "रतन सिंह","children": [{"name": "शेर सिंह","children": [{"name": "जीतेन्द्र सिंह"}, {"name": "युवराज सिंह"}, {"name": "बल्ली सिंह"}]}, {"name": "कल्याण सिंह","children": [{"name": "रणजीत सिंह"}, {"name": "त्रिभवन सिंह"}, {"name": "रमेश सिंह"}]}, {"name": "रघुवीर सिंह","children": [{"name": "वीरेंद्र सिंह"}, {"name": "कायम सिंह"}]}, {"name": "महावीर सिंह","children": [{"name": "नगेन्द्र सिंह"}, {"name": "सुनील सिंह"}]}, {"name": "प्रताप सिंह","children": [{"name": "पवन सिंह"}, {"name": "श्रवण सिंह"}, {"name": "महिपाल सिंह"}]}]}]}]}]}]}]}, {"name": "भोपत सिंह","children": [{"name": "पहाड़ सिंह","children": [{"name": "केशरी सिंह","children": [{"name": "मेघराज सिंह"}, {"name": "मुकन सिंह","children": [{"name": "गोपाल सिंह","children": [{"name": "रामा सिंह"}, {"name": "भगवान सिंह","children": [{"name": "मंगेज सिंह","children": [{"name": "ब्रह्मदेव सिंह"}, {"name": "राजदेव सिंह"}, {"name": "श्रीदेव सिंह"}, {"name": "कलादेव सिंह"}, {"name": "सुखकरण सिंह"}, {"name": "गोविन्द सिंह"}]}, {"name": "बिजे सिंह","children": [{"name": "सूरजमाल सिंह"}, {"name": "देशराज सिंह"}, {"name": "कर्णी सिंह"}]}, {"name": "माधो सिंह"}, {"name": "नारायण सिंह","children": [{"name": "रघुनाथ सिंह"}]}, {"name": "जीवराज सिंह","children": [{"name": "करणपाल सिंह"}, {"name": "मोहन सिंह"}, {"name": "भुपेन्द्र सिंह"}]}]}]}]}, {"name": "सोजी सिंह","children": [{"name": "सौनाथ सिंह"}, {"name": "गणपत सिंह","children": [{"name": "जगमाल सिंह","children": [{"name": "मेघ सिंह","children": [{"name": "सुजान सिंह"}, {"name": "रणजीत सिंह"}]}, {"name": "पन्ने सिंह"}, {"name": "भवर सिंह","children": [{"name": "बलबीर सिंह"}]}, {"name": "दुर्जन सिंह","children": [{"name": "रामवतार सिंह"}, {"name": "मोहन सिंह"}, {"name": "वीरेंद्र सिंह"}, {"name": "महिपाल सिंह"}]}]}, {"name": "नानू सिंह","children": [{"name": "चत्रर सिंह","children": [{"name": "करणी सिंह"}, {"name": "------"}]}, {"name": "नोप सिंह","children": [{"name": "सरजीत सिंह"}, {"name": "धर्मपाल सिंह"}]}, {"name": "गुलाब सिंह","children": [{"name": "अजय सिंह"}, {"name": "मोती सिंह"}]}, {"name": "भरत सिंह","children": [{"name": "नरपत सिंह"}, {"name": "वीरेंद्र सिंह"}]}]}, {"name": "गिरधारी सिंह","children": [{"name": "कृष्ण सिंह","children": [{"name": "सवाई सिंह"}, {"name": "रणवीर सिंह"}, {"name": "हाकम सिंह"}, {"name": "मनोज सिंह"}, {"name": "सत्यवीर सिंह"}]}, {"name": "सोहन सिंह","children": [{"name": "बलजीत सिंह"}]}, {"name": "सुमेर सिंह","children": [{"name": "संजय सिंह"}, {"name": "पवन सिंह"}]}]}]}, {"name": "छोग सिंह","children": [{"name": "नंदराम सिंह","children": [{"name": "सुरजन सिंह","children": [{"name": "शिवराज सिंह"}, {"name": "रघुनाथ सिंह"}]}, {"name": "ओम सिंह"}, {"name": "सवाई सिंह","children": [{"name": "रोहताश सिंह"}, {"name": "रमेश सिंह"}]}, {"name": "गुमान सिंह","children": [{"name": "भगीरथ सिंह"}, {"name": "-----"}]}]}, {"name": "रावत सिंह","children": [{"name": "किशोर सिंह","children": [{"name": "तेजू सिंह"}, {"name": "देबू सिंह"}, {"name": "शक्ति सिंह"}]}]}, {"name": "भभूत सिंह "}, {"name": "बच्चन सिंह","children": [{"name": "करणी सिंह","children": [{"name": "रविंद्र सिंह"}]}]}, {"name": "हीर सिंह","children": [{"name": "मान सिंह","children": [{"name": "देवेंद्र सिंह"}, {"name": "सोनू सिंह"}]}, {"name": "वेदपाल सिंह","children": [{"name": "संदीप सिंह"}]}]}]}]}]}, {"name": "ईश्वर सिंह"}]}]}, {"name": "भोम सिंह"}, {"name": "बुद्धा सिंह"}]}, {"name": "इन्द्र सिंह (चैनपुरा ढिगारला)"}, {"name": "थान सिंह (सोदानपुरा)"}, {"name": "हिम्मत सिंह (मलकश)"}, {"name": "तेजपाल सिंह (मलवास)"}, {"name": "रूप सिंह"}]}, {"name": "संगत सिंह"}]}]}]}]}, {"name": "सुरजन सिंह"}, {"name": "करमसेन सिंह जी"}, {"name": "पूरणमल सिंह जी"}, {"name": "अचलदास सिंह जी"}, {"name": "मान सिंह जी"}, {"name": "भोजराज सिंह जी"}, {"name": "तिलकसिंह जी"}, {"name": "शेओ सिंह जी"}, {"name": "अशपाल सिंह जी"}]}, {"name": "रतन सिंह जी"}, {"name": "प्रताप सिंह जी"}, {"name": "बैरसी सिंह जी "}]}, {"name": "राव गुरसिंह जी"}, {"name": "राव उमरा सिंह"}, {"name": "राव राज सिंह"}]};
+
+// ====== CONFIG: where requests are sent ======
+const RECEIVER_EMAIL = 'lazyboyx55@gmail.com';
 
 const $ = id => document.getElementById(id);
 const D = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 700;
@@ -770,73 +752,67 @@ $('reqForm').addEventListener('submit', async e => {
   if (f.get('_honey')) return;
   if (!f.get('sender_name').trim()) { say('Please enter your name.', 'err'); $('fSender').focus(); return; }
   if (!f.get('new_name').trim() && !f.get('details').trim()) { say('Please write the name or details you want to add or change.', 'err'); $('fNew').focus(); return; }
-  const rec = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), createdAt: Date.now() };
-  f.forEach((v, k) => { if (k !== '_honey' && String(v).trim()) rec[k] = String(v).trim().slice(0, 1000); });
-  btn.disabled = true; say('Posting\u2026');
-  try { await postRequest(rec); say('Thank you! Your request is now in the Requests chat.', 'ok'); e.target.reset(); $('fLine').value = '';
-    setTimeout(() => { $('reqDlg').close(); openChat(); }, 1200);
-  } catch (err) { say('Could not post the request. Please try again.', 'err'); }
-  finally { btn.disabled = false; }
-});
-
-// ---------- Requests chat (shared feed of every change request) ----------
-let userCap = null, myId = null, isOwner = false, chatItems = [], chatOk = false;
-const LOCAL_KEY = 'vansh_requests_v1';
-const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function loadLocal() { try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (e) { return []; } }
-function saveLocal(a) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(a.slice(-100))); } catch (e) {} }
-async function postRequest(rec) {
-  if (dbRef && myId) {
-    const ref = dbRef.doc('requests/' + myId);
-    let cur = []; try { const snap = await ref.get(); const v = snap && (snap.data ? snap.data() : snap); cur = (v && v.items) || []; } catch (e) {}
-    cur.push(rec); await ref.set({ items: cur.slice(-200) });
-  } else { const a = loadLocal(); a.push(rec); saveLocal(a); chatItems = a.slice(); renderChat(); }
-}
-function fmtTime(ts) { try { return new Date(ts).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
-function renderChat() {
-  const box = $('chatList'); if (!box) return;
-  const items = chatItems.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-  $('chatCount').hidden = !items.length; $('chatCount').textContent = items.length;
-  $('chatNote').textContent = chatOk ? 'Live: requests from all visitors appear here.' : 'Shared chat is not available here, so only requests made on this device are shown.';
-  if (!items.length) { box.innerHTML = '<p class="chat-empty">No requests yet. Press <b>Add / Change name</b> to post the first one.</p>'; return; }
-  box.innerHTML = items.map(r => {
-    const mine = r.mine;
-    const rows = [['Related person', r.related_person], ['New / correct name', r.new_name], ['Details', r.details], ['Family line', r.lineage]]
-      .filter(x => x[1]).map(x => '<div class="cr"><span>' + esc(x[0]) + '</span>' + esc(x[1]) + '</div>').join('');
-    return '<div class="bub' + (mine ? ' me' : '') + '"><div class="bh"><b>' + esc(r.sender_name || 'Visitor') + '</b><i>' + esc(fmtTime(r.createdAt)) + '</i></div>'
-      + '<div class="bt">' + esc(r.request_type || 'Request') + '</div>' + rows
-      + (r.status ? '<div class="bs">' + esc(r.status) + '</div>' : '')
-      + (isOwner && r._uid ? '<div class="ba"><button class="btn" data-st="Done" data-u="' + esc(r._uid) + '" data-i="' + esc(r.id) + '">Mark done</button><button class="btn" data-del="1" data-u="' + esc(r._uid) + '" data-i="' + esc(r.id) + '">Delete</button></div>' : '')
-      + '</div>';
-  }).join('');
-  box.scrollTop = box.scrollHeight;
-}
-$('chatList').addEventListener('click', async e => {
-  const b = e.target.closest('button[data-u]'); if (!b || !dbRef) return;
-  const ref = dbRef.doc('requests/' + b.dataset.u);
+  if (!f.get('phone').trim() && !f.get('email').trim()) { say('Please give a phone number or email so we can contact you.', 'err'); $('fPhone').focus(); return; }
+  const data = {};
+  f.forEach((v, k) => { if (k !== '_honey' && String(v).trim()) data[k] = String(v).trim(); });
+  data._subject = 'Rathore Vanshavali: ' + data.request_type + (data.new_name ? ' - ' + data.new_name : '');
+  data._template = 'table'; data._captcha = 'false';
+  btn.disabled = true; say('Sending…');
+  const body = Object.entries(data).filter(([k]) => k[0] !== '_').map(([k, v]) => k.replace(/_/g, ' ') + ': ' + v).join('\n');
   try {
-    const snap = await ref.get(); const v = snap && (snap.data ? snap.data() : snap); let items = (v && v.items) || [];
-    if (b.dataset.del) items = items.filter(r => r.id !== b.dataset.i); else items = items.map(r => r.id === b.dataset.i ? Object.assign({}, r, { status: b.dataset.st }) : r);
-    await ref.set({ items });
-  } catch (err) { toast('Could not update the request.'); }
+    // 1) normal way: FormSubmit AJAX (works on a real website once the form is activated)
+    const r = await fetch('https://formsubmit.co/ajax/' + RECEIVER_EMAIL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) });
+    let j = {}; try { j = await r.json(); } catch (_) {}
+    if (r.ok && (j.success === true || j.success === 'true')) {
+      say('Thank you! Your request has been sent.', 'ok'); e.target.reset(); $('fLine').value = '';
+      setTimeout(() => { $('reqDlg').close(); }, 2200);
+    } else {
+      showSendProblem(st, data, body, 'FormSubmit replied: ' + (j.message || ('error ' + r.status)));
+    }
+  } catch (err) {
+    console.error('Request form:', err);
+    // 2) the browser blocked the request (opened from a file, or a restricted preview)
+    let saved = false;
+    if (dbRef) {
+      try {
+        const rec = {}; Object.entries(data).forEach(([k, v]) => { if (k[0] !== '_') rec[k] = v; });
+        rec.subject = data._subject; rec.createdAt = Date.now();
+        await dbRef.collection('requests').doc(Date.now() + '-' + Math.random().toString(36).slice(2, 7)).set(rec);
+        saved = true;
+      } catch (_) {}
+    }
+    if (saved) { say('Thank you! Your request has been recorded.', 'ok'); e.target.reset(); $('fLine').value = ''; setTimeout(() => { $('reqDlg').close(); }, 2200); }
+    else {
+      // 3) plain form post in a hidden frame: needs no CORS permission, but delivery cannot be confirmed
+      try { postViaFrame(data); } catch (_) {}
+      showSendProblem(st, data, body, 'The request was submitted, but this page cannot confirm that it was delivered (the browser blocked the reply). Open the page from your website instead of a file for a confirmed send.', true);
+    }
+  } finally { btn.disabled = false; }
 });
-function openChat() { renderChat(); $('chatDlg').showModal(); }
-$('chatBtn').onclick = openChat;
-$('chatNew').onclick = () => { $('chatDlg').close(); openRequest(null); };
-(async function initChat() {
-  chatItems = loadLocal(); renderChat();
-  try {
-    if (!(window.claude && claude.use)) return;
-    userCap = await claude.use('user'); if (userCap) { try { isOwner = await userCap.isOwner(); } catch (e) {} try { myId = await userCap.id(); } catch (e) {} }
-    const d = await claude.use('db'); if (!d) return; dbRef = d; chatOk = true;
-    const handle = snap => {
-      const out = []; const docs = snap.docs || [];
-      docs.forEach(doc => { const v = doc.data ? doc.data() : doc; (v && v.items || []).forEach(it => out.push(Object.assign({}, it, { _uid: doc.id, mine: doc.id === myId }))); });
-      chatItems = out; renderChat();
-    };
-    d.collection('requests').onSnapshot(handle, () => { chatOk = false; renderChat(); });
-  } catch (e) {}
-})();
+function postViaFrame(data) {
+  const name = 'fs' + Date.now(), fr = document.createElement('iframe'); fr.name = name; fr.hidden = true; document.body.appendChild(fr);
+  const f = document.createElement('form'); f.method = 'POST'; f.action = 'https://formsubmit.co/' + RECEIVER_EMAIL; f.target = name; f.hidden = true;
+  Object.entries(data).forEach(([k, v]) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); });
+  document.body.appendChild(f); f.submit();
+  setTimeout(() => { f.remove(); fr.remove(); }, 20000);
+}
+function showSendProblem(st, data, body, reason, submitted) {
+  st.className = submitted ? '' : 'err'; st.textContent = '';
+  const msg = document.createElement('span'); msg.style.display = 'block';
+  msg.textContent = (submitted ? '' : 'Could not send. ') + reason + (submitted ? ' To be sure, you can also send it yourself:' : ' You can send it yourself instead:');
+  st.appendChild(msg);
+  const wrap = document.createElement('span'); wrap.style.display = 'block'; wrap.style.marginTop = '6px';
+  const gm = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(RECEIVER_EMAIL) + '&su=' + encodeURIComponent(data._subject) + '&body=' + encodeURIComponent(body);
+  const mt = 'mailto:' + RECEIVER_EMAIL + '?subject=' + encodeURIComponent(data._subject) + '&body=' + encodeURIComponent(body);
+  [['Open Gmail', gm, true], ['Email app', mt, false]].forEach(([t, h, blank]) => {
+    const a = document.createElement('a'); a.href = h; a.textContent = t; a.className = 'btn';
+    if (blank) { a.target = '_blank'; a.rel = 'noopener'; }
+    a.style.cssText = 'display:inline-block;text-decoration:none;margin:4px 6px 0 0'; wrap.appendChild(a);
+  });
+  const c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.style.marginTop = '4px'; c.textContent = 'Copy text';
+  c.onclick = () => copyText('To: ' + RECEIVER_EMAIL + '\n' + data._subject + '\n\n' + body, 'Copied. Paste it in WhatsApp or email.');
+  wrap.appendChild(c); st.appendChild(wrap);
+}
 
 // ---------- Updates & news (Word .docx files read from a GitHub folder) ----------
 // Nothing to edit here when the page is hosted on GitHub Pages: it finds your repository automatically.

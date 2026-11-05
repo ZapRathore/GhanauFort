@@ -814,10 +814,12 @@ function showSendProblem(st, data, body, reason, submitted) {
   wrap.appendChild(c); st.appendChild(wrap);
 }
 
-// ---------- Updates & news (Word .docx files read from a GitHub folder) ----------
+// ---------- Updates & news (Word .docx, images, PDF and text files read from a GitHub folder) ----------
 // Nothing to edit here when the page is hosted on GitHub Pages: it finds your repository automatically.
 // Hosting somewhere else? Fill in owner and repo (example: owner:'lazyboyx55', repo:'vanshavali').
 const UPDATES = { owner: '', repo: '', folder: 'updates' };
+const NEWS_EXT = /\.(docx|jpe?g|png|gif|webp|bmp|svg|pdf|txt)$/i;
+const IMG_EXT = /\.(jpe?g|png|gif|webp|bmp|svg)$/i;
 const MAMMOTH_URLS = ['https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js', 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'];
 function updatesSource() {
   let o = UPDATES.owner, r = UPDATES.repo; const h = location.hostname;
@@ -826,23 +828,24 @@ function updatesSource() {
   return o && r ? { o, r, f: UPDATES.folder } : null;
 }
 function parseNewsItem(x) {
-  const base = x.name.replace(/\.docx$/i, '');
+  const base = x.name.replace(NEWS_EXT, '');
   let ts = 0, title = base, m;
   if ((m = base.match(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/))) { ts = Date.UTC(+m[1], +m[2] - 1, +m[3]); title = base.replace(m[0], ''); }
   else if ((m = base.match(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/))) { ts = Date.UTC(+m[3], +m[2] - 1, +m[1]); title = base.replace(m[0], ''); }
   title = title.replace(/[_]+/g, ' ').replace(/^[\s\-–.]+|[\s\-–.]+$/g, '').replace(/\s+/g, ' ');
-  return { name: x.name, sha: x.sha, url: x.download_url, title: title || base, ts };
+  const kind = /\.docx$/i.test(x.name) ? 'docx' : IMG_EXT.test(x.name) ? 'img' : /\.pdf$/i.test(x.name) ? 'pdf' : 'txt';
+  return { name: x.name, sha: x.sha, url: x.download_url, title: title || base, ts, kind };
 }
 async function fetchNews(force) {
   const src = updatesSource(); if (!src) throw { code: 'config' };
-  const key = 'rathore-news-cache';
+  const key = 'rathore-news-cache-v2';
   try { if (!force) { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.t < 600000) return c.items; } } catch (e) {}
   const r = await fetch(`https://api.github.com/repos/${src.o}/${src.r}/contents/${src.f.split('/').map(encodeURIComponent).join('/')}`, { headers: { Accept: 'application/vnd.github+json' } });
   if (r.status === 404) throw { code: 'nofolder' };
   if (r.status === 403 || r.status === 429) throw { code: 'limit' };
   if (!r.ok) throw { code: 'http' };
   const arr = await r.json();
-  const items = arr.filter(x => x.type === 'file' && /\.docx$/i.test(x.name) && !x.name.startsWith('~$')).map(parseNewsItem)
+  const items = arr.filter(x => x.type === 'file' && NEWS_EXT.test(x.name) && !x.name.startsWith('~$')).map(parseNewsItem)
     .sort((a, b) => (b.ts - a.ts) || b.name.localeCompare(a.name));
   try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), items })); } catch (e) {}
   return items;
@@ -872,6 +875,22 @@ function loadMammoth() {
 async function loadNewsBody(item, box) {
   box.textContent = 'Loading…';
   try {
+    if (item.kind === 'img') {
+      const im = document.createElement('img'); im.alt = item.title; im.loading = 'lazy';
+      im.onload = () => { item.loaded = true; };
+      im.onerror = () => { box.innerHTML = '<p class="muted">Could not open this image here. Please use the download link below.</p>'; };
+      im.src = item.url; box.textContent = ''; box.appendChild(im); return;
+    }
+    if (item.kind === 'pdf') {
+      const fr = document.createElement('iframe'); fr.src = item.url; fr.title = item.title;
+      fr.style.cssText = 'width:100%;height:70vh;border:1px solid var(--stroke);border-radius:8px;background:#fff';
+      box.textContent = ''; box.appendChild(fr); item.loaded = true; return;
+    }
+    if (item.kind === 'txt') {
+      const r = await fetch(item.url); if (!r.ok) throw new Error('file');
+      const pre = document.createElement('div'); pre.style.whiteSpace = 'pre-wrap'; pre.textContent = await r.text();
+      box.textContent = ''; box.appendChild(pre); item.loaded = true; return;
+    }
     await loadMammoth();
     const r = await fetch(item.url); if (!r.ok) throw new Error('file');
     const out = await mammoth.convertToHtml({ arrayBuffer: await r.arrayBuffer() });
@@ -903,7 +922,7 @@ async function renderNews(force) {
       sum.append(t, dt);
       const body = document.createElement('div'); body.className = 'nb';
       const foot = document.createElement('div'); foot.className = 'nf';
-      const a = document.createElement('a'); a.href = it.url; a.textContent = 'Download the Word file'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      const a = document.createElement('a'); a.href = it.url; a.textContent = it.kind === 'docx' ? 'Download the Word file' : it.kind === 'img' ? 'Open the full image' : it.kind === 'pdf' ? 'Open the PDF' : 'Download the file'; a.target = '_blank'; a.rel = 'noopener noreferrer';
       foot.appendChild(a);
       det.append(sum, body, foot);
       det.addEventListener('toggle', () => { if (det.open && !it.loaded) loadNewsBody(it, body); });
@@ -913,7 +932,7 @@ async function renderNews(force) {
   } catch (e) {
     const code = e && e.code;
     if (code === 'config') newsMessage('Updates are not connected yet.', 'For the site owner: host this page on GitHub Pages, or set owner and repo in the UPDATES settings in the page code.');
-    else if (code === 'nofolder') newsMessage('The updates folder was not found.', `For the site owner: create a folder named "${UPDATES.folder}" in the GitHub repository and upload .docx files there.`);
+    else if (code === 'nofolder') newsMessage('The updates folder was not found.', `For the site owner: create a folder named "${UPDATES.folder}" in the GitHub repository and upload .docx, .jpg, .png or .pdf files there.`);
     else if (code === 'limit') newsMessage('GitHub is limiting requests right now. Please try again in a few minutes.');
     else newsMessage('Could not load updates. Please check your internet connection and press Refresh.');
   }

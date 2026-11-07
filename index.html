@@ -59,6 +59,7 @@ body{overflow:hidden;font-family:'Hind',system-ui,sans-serif;color:var(--ink);ba
 .btn{font:inherit;font-size:13px;font-weight:500;color:var(--ink);background:transparent;border:1px solid var(--stroke);border-radius:99px;padding:7px 14px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,transform .15s}
 .btn:hover,.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .btn:active{transform:scale(.96)}
+.btn{text-decoration:none;display:inline-block}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .btn.primary:hover{filter:brightness(1.12)}
 .btn.sq{padding:7px 12px;font-weight:600}
@@ -271,6 +272,7 @@ dialog.wide{width:min(780px,calc(100vw - 24px))}
     <button class="btn" id="themeBtn">Day mode</button>
   </div>
   <span class="sep" id="moreSep"></span>
+  <a class="btn" id="blogBtn" href="blog.html" aria-label="Read the blog"><span class="lg">📝 Blog</span><span class="sm">📝 Blog</span></a>
   <button class="btn" id="newsBtn" aria-label="Latest updates and news"><span class="lg">📰 Updates</span><span class="sm">📰 News</span><i class="dot" id="newsDot" hidden></i></button>
   <button class="btn" id="moreBtn" aria-haspopup="true" aria-expanded="false">More ▴</button>
   <button class="btn primary" id="reqBtn"><span class="lg">✎ Add / Change name</span><span class="sm">✎ Request</span></button>
